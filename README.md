@@ -1,38 +1,9 @@
 # Virtual Classroom — System Architecture & Production Deployment Guide
 
-A multi-tenant academic management portal and learning management system (LMS) built on JavaServer Pages (JSP), Apache Tomcat 9, MySQL 8.0, and an Nginx reverse proxy edge gateway. The application implements role-based access control (RBAC) across Students, Faculty, and System Administrators, backed by connection-pooled database interactions, transparent cryptographic password migration, and containerized deployment.
+A multi academic management portal and learning management system (LMS) built on JavaServer Pages (JSP), Apache Tomcat 9, MySQL 8.0, and an Nginx reverse proxy edge gateway.
 
----
+The application implements role-based access control (RBAC) across Students, Faculty, and System Administrators, backed by connection-pooled database interactions, transparent cryptographic password migration, and containerized deployment.
 
-## Table of Contents
-
-- [1. System Architecture](#1-system-architecture)
-  - [1.1 Infrastructure Topology](#11-infrastructure-topology)
-  - [1.2 Component Responsibilities](#12-component-responsibilities)
-- [2. Request Lifecycle & Data Flow](#2-request-lifecycle--data-flow)
-- [3. Database Schema & Data Models](#3-database-schema--data-models)
-  - [3.1 Entity-Relationship Diagram (ERD)](#31-entity-relationship-diagram-erd)
-  - [3.2 Table Definitions & Constraints](#32-table-definitions--constraints)
-  - [3.3 Least-Privilege Database Access](#33-least-privilege-database-access)
-- [4. Security Architecture](#4-security-architecture)
-  - [4.1 Password Hashing & Transparent Migration](#41-password-hashing--transparent-migration)
-  - [4.2 Session Management](#42-session-management)
-  - [4.3 Cross-Site Scripting (XSS) Sanitization](#43-cross-site-scripting-xss-sanitization)
-  - [4.4 HTTP Security Headers](#44-http-security-headers)
-- [5. Role-Based Access Control (RBAC) & Lifecycle](#5-role-based-access-control-rbac--lifecycle)
-  - [5.1 User Registration & Approval State Machine](#51-user-registration--approval-state-machine)
-  - [5.2 Role Matrix](#52-role-matrix)
-- [6. Configuration & Environment Variables](#6-configuration--environment-variables)
-- [7. Operational Runbook](#7-operational-runbook)
-  - [7.1 Prerequisites](#71-prerequisites)
-  - [7.2 Starting the Cluster](#72-starting-the-cluster)
-  - [7.3 Stopping the Cluster](#73-stopping-the-cluster)
-  - [7.4 Database Backups & Point-in-Time Recovery](#74-database-backups--point-in-time-recovery)
-  - [7.5 Default Bootstrap Credentials](#75-default-bootstrap-credentials)
-- [8. Repository Structure](#8-repository-structure)
-- [9. Troubleshooting & Failure Modes](#9-troubleshooting--failure-modes)
-
----
 
 ## 1. System Architecture
 
