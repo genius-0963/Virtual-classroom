@@ -1,0 +1,222 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1" buffer="64kb" import="java.sql.*"%>
+<%@ include file="db.jspf" %>
+<%
+    // if faculty is already logged in to the system, redirect to the dashboard
+    if(session.getAttribute("faculty") != null)
+    {
+        response.sendRedirect("faculty_dashboard.jsp");
+        return;
+    }
+
+    // handle login form submission on POST
+    if ("POST".equalsIgnoreCase(request.getMethod()) && request.getParameter("submit") != null)
+    {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        if (username != null && password != null && !username.trim().isEmpty() && !password.trim().isEmpty())
+        {
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
+            try
+            {
+                con = getDBConnection();
+                String sql = "select * from faculty where username = ?";
+                pstmt = con.prepareStatement(sql);
+                pstmt.setString(1, username.trim());
+                rs = pstmt.executeQuery();
+
+                if(rs.next())
+                {
+                    String storedHash = rs.getString("password");
+                    if (verifyPassword(password, storedHash))
+                    {
+                        int isApproved = rs.getInt("is_approved");
+                        if(isApproved == 0)
+                        {
+                            session.setAttribute("Error", "Your request has not yet been accepted by Administrator.");
+                        }
+                        else
+                        {
+                            // Upgrade to PBKDF2 if previously stored in legacy SHA1
+                            if (!storedHash.contains(":"))
+                            {
+                                try (PreparedStatement up = con.prepareStatement("update faculty set password = ? where username = ?"))
+                                {
+                                    up.setString(1, hashPassword(password));
+                                    up.setString(2, username.trim());
+                                    up.executeUpdate();
+                                }
+                            }
+                            session.removeAttribute("Error");
+                            session.setAttribute("faculty", rs.getString("name"));
+                            session.setAttribute("faculty_user", rs.getString("username"));
+                            session.setAttribute("faculty_subject", rs.getString("subject"));
+                            session.setAttribute("faculty_degree", rs.getString("degree"));
+                            session.setAttribute("faculty_course", rs.getString("course"));
+                            response.sendRedirect("faculty_dashboard.jsp");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        session.setAttribute("Error", "Invalid Password. Please try again.");
+                    }
+                }
+                else
+                {
+                    session.setAttribute("Error", "No registered account found with Username: " + username);
+                }
+            }
+            catch(Exception e)
+            {
+                session.setAttribute("Error", "Error: " + e.getMessage());
+            }
+            finally
+            {
+                if (rs != null) try { rs.close(); } catch(Exception ignored) {}
+                if (pstmt != null) try { pstmt.close(); } catch(Exception ignored) {}
+                if (con != null) try { con.close(); } catch(Exception ignored) {}
+            }
+        }
+    }
+%>
+    <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+    <html class="no-js" lang="zxx">
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Faculty Login</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="manifest" href="site.webmanifest">
+        <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
+
+        <!-- CSS here -->
+        <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+        <link rel="stylesheet" href="assets/css/owl.carousel.min.css">
+        <link rel="stylesheet" href="assets/css/slicknav.css">
+        <link rel="stylesheet" href="assets/css/flaticon.css">
+        <link rel="stylesheet" href="assets/css/progressbar_barfiller.css">
+        <link rel="stylesheet" href="assets/css/gijgo.css">
+        <link rel="stylesheet" href="assets/css/animate.min.css">
+        <link rel="stylesheet" href="assets/css/animated-headline.css">
+        <link rel="stylesheet" href="assets/css/magnific-popup.css">
+        <link rel="stylesheet" href="assets/css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="assets/css/themify-icons.css">
+        <link rel="stylesheet" href="assets/css/slick.css">
+        <link rel="stylesheet" href="assets/css/nice-select.css">
+        <link rel="stylesheet" href="assets/css/style.css">
+
+    </head>
+
+    <body>
+        <!-- ? Preloader Start -->
+        <div id="preloader-active">
+            <div class="preloader d-flex align-items-center justify-content-center">
+                <div class="preloader-inner position-relative">
+                    <div class="preloader-circle"></div>
+                    <div class="preloader-img pere-text">
+                        <img src="assets/img/logo/loder.png" alt="">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Preloader Start-->
+        <%@ include file="quick_login_box.jspf" %>
+
+        <main class="login-body">
+            <!-- Login Faculty -->
+            <form class="form-default" name="myform" action="faculty_login.jsp" method="POST">
+                    <div class="login-form">
+                        <!-- logo-login -->
+                        <div class="logo-login">
+                            <a href="index.jsp"><img src="assets/img/logo/loder.png" alt=""></a>
+                        </div>
+                        <h2>Login Here</h2>
+                        <div class="form-input">
+                            <input type="text" name="username" placeholder="Username" required>
+                        </div>
+                        <div class="form-input">
+                            <input type="password" name="password" placeholder="Password" required>
+                        </div>
+                        <p style="color:green">
+                            <%
+		if(session.getAttribute("reg_success") != null)
+		{
+			out.println(session.getAttribute("reg_success"));
+			session.removeAttribute("reg_success");
+		}
+%>
+                        </p>
+                        <p style="color:red">
+                            <%
+		if(session.getAttribute("Error") != null)
+		{
+			out.println(session.getAttribute("Error"));
+			session.removeAttribute("Error");
+		}
+%>
+                        </p>
+                        <div class="form-input pt-30">
+                            <input type="submit" name="submit" value="login">
+                        </div>
+
+                        <!-- Registration link -->
+                        <a href="faculty_register.jsp" class="registration"> Don't have an account? <b> Register here </b> </a>
+                    </div>
+            </form>
+            <!-- /end login form -->
+        </main>
+
+
+        <script src="./assets/js/vendor/modernizr-3.5.0.min.js"></script>
+        <!-- Jquery, Popper, Bootstrap -->
+        <script src="./assets/js/vendor/jquery-1.12.4.min.js"></script>
+        <script src="./assets/js/popper.min.js"></script>
+        <script src="./assets/js/bootstrap.min.js"></script>
+        <!-- Jquery Mobile Menu -->
+        <script src="./assets/js/jquery.slicknav.min.js"></script>
+
+        <!-- Video bg -->
+        <script src="./assets/js/jquery.vide.js"></script>
+
+        <!-- Jquery Slick , Owl-Carousel Plugins -->
+        <script src="./assets/js/owl.carousel.min.js"></script>
+        <script src="./assets/js/slick.min.js"></script>
+        <!-- One Page, Animated-HeadLin -->
+        <script src="./assets/js/wow.min.js"></script>
+        <script src="./assets/js/animated.headline.js"></script>
+        <script src="./assets/js/jquery.magnific-popup.js"></script>
+
+        <!-- Date Picker -->
+        <script src="./assets/js/gijgo.min.js"></script>
+        <!-- Nice-select, sticky -->
+        <script src="./assets/js/jquery.nice-select.min.js"></script>
+        <script src="./assets/js/jquery.sticky.js"></script>
+        <!-- Progress -->
+        <script src="./assets/js/jquery.barfiller.js"></script>
+
+        <!-- counter , waypoint,Hover Direction -->
+        <script src="./assets/js/jquery.counterup.min.js"></script>
+        <script src="./assets/js/waypoints.min.js"></script>
+        <script src="./assets/js/jquery.countdown.min.js"></script>
+        <script src="./assets/js/hover-direction-snake.min.js"></script>
+
+        <!-- contact js -->
+        <script src="./assets/js/contact.js"></script>
+        <script src="./assets/js/jquery.form.js"></script>
+        <script src="./assets/js/jquery.validate.min.js"></script>
+        <script src="./assets/js/mail-script.js"></script>
+        <script src="./assets/js/jquery.ajaxchimp.min.js"></script>
+
+        <!-- Jquery Plugins, main Jquery -->
+        <script src="./assets/js/plugins.js"></script>
+        <script src="./assets/js/main.js"></script>
+
+    </body>
+
+    </html>
