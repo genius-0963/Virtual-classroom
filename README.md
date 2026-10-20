@@ -58,57 +58,8 @@ flowchart TD
     MySQL -.->|mysqldump via backup-db.sh| Backups
 ```
 
-### 1.2 Component Responsibilities
 
-| Component | Technology | Role & Operational Characteristics |
-| :--- | :--- | :--- |
-| **Edge Gateway** | Nginx 1.25 (Alpine) | Reverse proxy, static asset buffering, gzip compression, HTTP header hardening, connection timeouts (60s), request payload limits (25MB). |
-| **Application Server** | Apache Tomcat 9.0 (`jdk11-openjdk-slim`) | Servlet 3.1 / JSP container running Catalina engine. Houses application logic in `ROOT` context. Uses `Tomcat JDBC Pool` with thread eviction and ping queries. |
-| **Relational Database** | MySQL 8.0 (Debian/Oracle) | Persistent ACID datastore with InnoDB storage engine. Bootstraps schema from `/docker-entrypoint-initdb.d/init.sql` upon initial startup. |
-
----
-
-## 2. Request Lifecycle & Data Flow
-
-When a client initiates an action (such as authenticating, posting a discussion question, or retrieving study resources), the request flows through the stack following this sequence:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Client Browser
-    participant Nginx as Nginx (Reverse Proxy)
-    participant Tomcat as Tomcat Catalina Engine
-    participant JSP as JSP Controller / db.jspf
-    participant Pool as Tomcat JDBC Pool
-    participant DB as MySQL Database
-
-    User->>Nginx: HTTP Request (GET / POST)
-    Note over Nginx: Append Security Headers<br/>(X-Frame-Options, X-Content-Type-Options)<br/>Evaluate gzip compression candidate
-    Nginx->>Tomcat: proxy_pass http://web:8080 with X-Forwarded-* headers
-    Tomcat->>JSP: Translate & compile .jsp if dirty -> Execute Servlet bytecode
-    Note over JSP: Parse Session & Parameters<br/>Apply escapeHtml() to outputs
-    JSP->>Pool: getDBConnection()
-    alt Idle Connection Available in Pool
-        Pool->>DB: Validation Query (SELECT 1)
-        DB-->>Pool: 1 (ACK)
-        Pool-->>JSP: Hand over active java.sql.Connection
-    else Pool Initializing or Busy
-        Pool->>DB: Create TCP Socket & Authenticate as vclass_user
-        DB-->>Pool: Connection Established
-        Pool-->>JSP: Hand over java.sql.Connection
-    end
-    JSP->>DB: java.sql.PreparedStatement (Parameterized Query)
-    DB-->>JSP: java.sql.ResultSet
-    Note over JSP: Process business logic / hash migration<br/>Generate response HTML
-    JSP->>Pool: Connection.close() (Recycled to Pool)
-    JSP-->>Tomcat: Rendered HTML stream + Set-Cookie (JSESSIONID; HttpOnly)
-    Tomcat-->>Nginx: HTTP 200 OK + Body
-    Nginx-->>User: Gzip Compressed HTTP Response
-```
-
----
-
-## 3. Database Schema & Data Models
+## . Database Schema & Data Models
 
 ### 3.1 Entity-Relationship Diagram (ERD)
 
@@ -184,30 +135,10 @@ erDiagram
     questions ||--o{ answers : "has answers (CASCADE DELETE)"
 ```
 
-### 3.2 Table Definitions & Constraints
 
-- **`student`**: Primary key on `roll_no`. Constraint `CHK_year` enforces `year BETWEEN 1 AND 3`. Registration sets `is_approved = FALSE` by default until an administrator verifies the account.
-- **`faculty`**: Primary key on `subject` (one faculty member per designated subject focus), unique constraint on `username`. Constraint `CHK_faculty_year` enforces `year BETWEEN 1 AND 3`. Requires administrative approval (`is_approved = FALSE`).
-- **`questions` & `answers`**: Connected via foreign key `fk_question` on `answers.question_id -> questions.id` with `ON DELETE CASCADE`. Removing a discussion question cascades to all associated replies.
-- **`enroll_for`**: Reference table defining valid pairings between degrees (e.g., `B.Sc`, `M.Sc`, `B.A.`, `M.A.`) and programs (e.g., `Computer Science`, `Computer Application`, `Data Science`, `Psychology`).
+## . Security Architecture
 
-### 3.3 Least-Privilege Database Access
-
-The application does not run queries as MySQL `root`. During database bootstrapping via `project_DB.sql`, a restricted user `vclass_user` is provisioned:
-
-```sql
-CREATE USER IF NOT EXISTS 'vclass_user'@'%' IDENTIFIED BY 'VClassSecret2026!';
-GRANT SELECT, INSERT, UPDATE, DELETE ON project.* TO 'vclass_user'@'%';
-FLUSH PRIVILEGES;
-```
-
-This prevents database structural modifications (DDL like `DROP TABLE` or `ALTER TABLE`) from the application tier.
-
----
-
-## 4. Security Architecture
-
-### 4.1 Password Hashing & Transparent Migration
+###  Password Hashing & Transparent Migration
 
 Passwords are processed through a cryptographic layer in `db.jspf`. To maintain backwards compatibility with legacy SHA-1 database hashes without compromising security, the system employs **transparent on-login re-hashing**:
 
@@ -262,23 +193,9 @@ Session configuration is enforced at the container level in `WEB-INF/web.xml`:
 - **`tracking-mode=COOKIE`**: Disables URL rewriting (e.g., `;jsessionid=...`), avoiding session leakage in HTTP referrers and server access logs.
 - **Session Expiry**: 60-minute inactivity threshold.
 
-### 4.3 Cross-Site Scripting (XSS) Sanitization
 
-All dynamic outputs in JSP views are routed through `escapeHtml()` defined in `db.jspf`:
 
-```java
-public static String escapeHtml(Object input) {
-    if (input == null) return "";
-    String s = input.toString();
-    return s.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\"", "&quot;")
-            .replace("'", "&#x27;");
-}
-```
-
-### 4.4 HTTP Security Headers
+### HTTP Security Headers
 
 Nginx injects baseline security headers on every outbound HTTP response:
 
@@ -504,36 +421,3 @@ Virtual-Classroom/
 ```
 
 ---
-
-## 9. Troubleshooting & Failure Modes
-
-### 1. Web application fails to connect to MySQL on boot
-- **Symptom**: `Tomcat JDBC Pool: Connection refused` or `Communications link failure`.
-- **Root Cause**: Tomcat started before the MySQL daemon finished initializing its socket.
-- **Resolution**: Verify `docker-compose.yml` includes the healthcheck dependency:
-  ```yaml
-  depends_on:
-    db:
-      condition: service_healthy
-  ```
-
-### 2. Client registration succeeds but login fails immediately
-- **Symptom**: Error message stating `"Your request has not yet been accepted by Administrator."`
-- **Root Cause**: Expected system behavior. Newly registered accounts have `is_approved = 0`.
-- **Resolution**: Log into the administrator dashboard at `http://localhost/admin_login.jsp`, navigate to **Student Requests** or **Faculty Requests**, and click **Accept**.
-
-### 3. Port collision on Host Port 80, 8080, or 3306
-- **Symptom**: `Bind for 0.0.0.0:80 failed: port is already allocated`.
-- **Root Cause**: A local Apache/Nginx web server or local MySQL instance is occupying the port.
-- **Resolution**: Modify the exposed ports in your `.env` file:
-  ```env
-  HTTP_PORT=8000
-  WEB_PORT=8081
-  DB_PORT=3307
-  ```
-  Then restart with `docker compose up -d --build`.
-
-### 4. Legacy passwords fail to verify
-- **Symptom**: Users with pre-existing SHA-1 passwords cannot sign in.
-- **Root Cause**: Corrupted hash format in the `password` column.
-- **Resolution**: `db.jspf` automatically accepts 40-character SHA-1 hex strings and upgrades them to PBKDF2 upon first successful login. Ensure the column type is `VARCHAR(255)` so the longer `salt:hash` string is not truncated.
