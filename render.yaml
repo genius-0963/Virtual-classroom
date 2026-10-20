@@ -1,0 +1,69 @@
+# ==============================================================================
+# Render Blueprint Specification (render.yaml)
+# Project: Virtual Classroom
+# Architecture: Apache Tomcat 9 Web Service + MySQL 8.0 Private Service
+# Docs: https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. Web Application Service (Tomcat 9 / JSP)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: virtual-classroom-web
+    runtime: docker
+    plan: starter # Can be switched to 'free' if connecting to an external database
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      # Tell Render's reverse proxy to route public incoming traffic to Tomcat (8080)
+      - key: PORT
+        value: 8080
+
+      # Database connection parameters wired from internal private network
+      - key: DB_HOST
+        fromService:
+          name: virtual-classroom-db
+          type: pserv
+          property: host
+
+      - key: DB_PORT
+        value: 3306
+
+      - key: DB_NAME
+        value: project
+
+      - key: DB_USER
+        value: vclass_user
+
+      - key: DB_PASSWORD
+        fromService:
+          name: virtual-classroom-db
+          type: pserv
+          envVarKey: MYSQL_PASSWORD
+
+  # ---------------------------------------------------------------------------
+  # 2. Database Tier: MySQL 8.0 (Private Service with Persistent Disk)
+  # ---------------------------------------------------------------------------
+  - type: pserv
+    name: virtual-classroom-db
+    runtime: docker
+    plan: starter # Persistent disks require Starter tier or higher
+    region: oregon
+    dockerfilePath: ./Dockerfile.db
+    dockerContext: .
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        value: Mypasswordis2425
+      - key: MYSQL_DATABASE
+        value: project
+      - key: MYSQL_USER
+        value: vclass_user
+      - key: MYSQL_PASSWORD
+        value: VClassSecret2026!

@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+.saropa
+backups/
+*.sh
+docker-compose.yml
+nginx/
+render.yaml
+README.md
+Dockerfile*

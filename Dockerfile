@@ -11,4 +11,6 @@ RUN cp /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/mysql-connector-j-*.jar /usr/l
 
 EXPOSE 8080
 
-CMD ["catalina.sh", "run"]
+# Dynamically configure Tomcat port if $PORT is injected by cloud platforms (e.g., Render)
+CMD ["sh", "-c", "sed -i \"s/port=\\\"8080\\\"/port=\\\"${PORT:-8080}\\\"/g\" /usr/local/tomcat/conf/server.xml && catalina.sh run"]
+

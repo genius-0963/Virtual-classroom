@@ -1,0 +1,7 @@
+FROM mysql:8.0
+
+# Copy initialization script with database schemas, tables, and seed records
+COPY project_DB.sql /docker-entrypoint-initdb.d/init.sql
+
+# Enforce mysql_native_password authentication plugin for universal JDBC compatibility
+CMD ["mysqld", "--default-authentication-plugin=mysql_native_password"]
