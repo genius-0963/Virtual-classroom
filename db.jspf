@@ -1,0 +1,116 @@
+<%@ page import="java.sql.*, javax.sql.DataSource, java.security.*, java.security.spec.*, javax.crypto.*, javax.crypto.spec.*, java.util.Base64" %>
+<%!
+// --- Production Connection Pool (Tomcat JDBC Pool) ---
+private static volatile DataSource pooledDataSource = null;
+
+private static synchronized DataSource getPooledDataSource() {
+    if (pooledDataSource == null) {
+        try {
+            org.apache.tomcat.jdbc.pool.PoolProperties p = new org.apache.tomcat.jdbc.pool.PoolProperties();
+            String host = System.getenv("DB_HOST") != null && !System.getenv("DB_HOST").trim().isEmpty() ? System.getenv("DB_HOST").trim() : "localhost";
+            String port = System.getenv("DB_PORT") != null && !System.getenv("DB_PORT").trim().isEmpty() ? System.getenv("DB_PORT").trim() : "3306";
+            String user = System.getenv("DB_USER") != null && !System.getenv("DB_USER").trim().isEmpty() ? System.getenv("DB_USER").trim() : "vclass_user";
+            String pass = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "VClassSecret2026!";
+            String db   = System.getenv("DB_NAME") != null && !System.getenv("DB_NAME").trim().isEmpty() ? System.getenv("DB_NAME").trim() : "project";
+
+            String url = "jdbc:mysql://" + host + ":" + port + "/" + db + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8";
+            p.setUrl(url);
+            p.setDriverClassName("com.mysql.cj.jdbc.Driver");
+            p.setUsername(user);
+            p.setPassword(pass);
+            p.setJmxEnabled(true);
+            p.setTestWhileIdle(true);
+            p.setTestOnBorrow(true);
+            p.setValidationQuery("SELECT 1");
+            p.setValidationInterval(30000);
+            p.setTimeBetweenEvictionRunsMillis(30000);
+            p.setMaxActive(30);
+            p.setInitialSize(5);
+            p.setMaxWait(10000);
+            p.setMinIdle(5);
+
+            org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
+            ds.setPoolProperties(p);
+            pooledDataSource = ds;
+        } catch (Throwable t) {
+            System.err.println("[VirtualClassroom] Could not initialize Tomcat JDBC Pool: " + t.getMessage());
+            pooledDataSource = null;
+        }
+    }
+    return pooledDataSource;
+}
+
+public static Connection getDBConnection() throws Exception {
+    DataSource ds = getPooledDataSource();
+    if (ds != null) {
+        try {
+            return ds.getConnection();
+        } catch (Exception ex) {
+            System.err.println("[VirtualClassroom] Pool connection failed, falling back to direct connection: " + ex.getMessage());
+        }
+    }
+
+    // Direct connection fallback
+    Class.forName("com.mysql.cj.jdbc.Driver");
+    String host = System.getenv("DB_HOST") != null && !System.getenv("DB_HOST").trim().isEmpty() ? System.getenv("DB_HOST").trim() : "localhost";
+    String port = System.getenv("DB_PORT") != null && !System.getenv("DB_PORT").trim().isEmpty() ? System.getenv("DB_PORT").trim() : "3306";
+    String user = System.getenv("DB_USER") != null && !System.getenv("DB_USER").trim().isEmpty() ? System.getenv("DB_USER").trim() : "root";
+    String pass = System.getenv("DB_PASSWORD") != null ? System.getenv("DB_PASSWORD") : "Mypasswordis2425";
+    String db   = System.getenv("DB_NAME") != null && !System.getenv("DB_NAME").trim().isEmpty() ? System.getenv("DB_NAME").trim() : "project";
+    String url = "jdbc:mysql://" + host + ":" + port + "/" + db + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8";
+    return DriverManager.getConnection(url, user, pass);
+}
+
+// --- Security: Cryptographic Password Hashing (PBKDF2 with Salt) ---
+public static String hashPassword(String password) {
+    if (password == null) return null;
+    try {
+        byte[] salt = new byte[16];
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(salt);
+        KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+        byte[] hash = factory.generateSecret(spec).getEncoded();
+        return Base64.getEncoder().encodeToString(salt) + ":" + Base64.getEncoder().encodeToString(hash);
+    } catch (Exception e) {
+        throw new RuntimeException("Error hashing password", e);
+    }
+}
+
+public static boolean verifyPassword(String password, String storedHash) {
+    if (password == null || storedHash == null) return false;
+    try {
+        if (storedHash.contains(":")) {
+            String[] parts = storedHash.split(":");
+            byte[] salt = Base64.getDecoder().decode(parts[0]);
+            byte[] expectedHash = Base64.getDecoder().decode(parts[1]);
+            KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] actualHash = factory.generateSecret(spec).getEncoded();
+            return MessageDigest.isEqual(expectedHash, actualHash);
+        } else {
+            // Legacy SHA1 fallback for backwards compatibility
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] digest = md.digest(password.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString().equalsIgnoreCase(storedHash.trim());
+        }
+    } catch (Exception e) {
+        return false;
+    }
+}
+
+// --- Security: XSS Sanitization & HTML Escaping ---
+public static String escapeHtml(Object input) {
+    if (input == null) return "";
+    String s = input.toString();
+    return s.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#x27;");
+}
+%>
