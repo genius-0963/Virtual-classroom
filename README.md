@@ -1,15 +1,57 @@
 # Virtual Classroom — System Architecture & Production Deployment Guide
 
-A fully depolyed project in both docker , Amazone AWS EC2 in ubuntu default Login Credentials of Administrator Faculty	teacher	and Student
+> 🚀 **Live Production Deployment:** Amazon EC2 public IP is [http://13.211.56.138/](http://13.211.56.138/)
 
-this is a  multi academic management portal and learning management system built on JavaServer Pages (JSP), Apache Tomcat 9, MySQL 8.0, and an Nginx reverse proxy edge gateway.
+A fully deployed project in both Docker and Amazon AWS EC2 on Ubuntu. This is a multi-academic management portal and learning management system (LMS) built on JavaServer Pages (JSP), Apache Tomcat 9, MySQL 8.0, and an Nginx reverse proxy edge gateway. Default login credentials are provided for Administrator, Faculty (`teacher`), and Student (`2001`).
 
 The application implements role-based access control (RBAC) across Students, Faculty, and System Administrators, backed by connection-pooled database interactions, transparent cryptographic password migration, and containerized deployment.
 
 
-## 1. System Architecture
+## 1. Live Deployment & Visual Preview
 
-### 1.1 Infrastructure Topology
+The project is fully containerized and deployed to Amazon Web Services (AWS) EC2.
+
+> **Amazon EC2 public IP is [http://13.211.56.138/](http://13.211.56.138/)**
+
+### 1.1 Docker Desktop — Container Build & Execution
+Multi-tier Docker container build timing, layer caching, and execution breakdown for the Virtual Classroom web application stack.
+
+![Docker Desktop Build & Containerization](screenshots/01-docker-desktop-build.png)
+
+---
+
+### 1.2 AWS EC2 Console — Instance Summary & Public IP
+AWS EC2 Management Console showing the live running `t3.micro` instance (`i-0e2f420e99049ab22`) hosted in `ap-southeast-2` (Sydney) with public IPv4 address `13.211.56.138`.
+
+![AWS EC2 Instance Deployment](screenshots/02-aws-ec2-deployment.png)
+
+---
+
+### 1.3 Virtual Classroom — Web Portal Landing Page
+Live public homepage running on AWS EC2 at [http://13.211.56.138/](http://13.211.56.138/), featuring responsive UI, course overview, and role-based quick login authentication.
+
+![Virtual Classroom Landing Page](screenshots/03-virtual-classroom-homepage.png)
+
+---
+
+### 1.4 Study Materials Portal (`/study-material.jsp`)
+Academic resource distribution portal accessible at [http://13.211.56.138/study-material.jsp](http://13.211.56.138/study-material.jsp), allowing students and faculty to access lecture notes, curriculum guides, and downloadable resources.
+
+![Study Materials Resource Portal](screenshots/04-study-materials-portal.png)
+
+---
+
+### 1.5 Interactive Q&A Discussion Forum (`/qna.jsp`)
+Collaborative community forum accessible at [http://13.211.56.138/qna.jsp](http://13.211.56.138/qna.jsp), where students post questions by subject and faculty members provide verified answers and explanations.
+
+![Interactive Q&A Discussion Forum](screenshots/05-qna-discussion-forum.png)
+
+---
+
+
+## 2. System Architecture
+
+### 2.1 Infrastructure Topology
 
 The deployment comprises three isolated containerized tiers interconnected via a private Docker bridge network (`virtual_classroom_default`). Only the Nginx edge gateway and development ports are exposed to the host machine.
 
@@ -61,7 +103,7 @@ flowchart TD
 ```
 
 
-## . Database Schema & Data Models
+## 3. Database Schema & Data Models
 
 ### 3.1 Entity-Relationship Diagram (ERD)
 
@@ -138,9 +180,9 @@ erDiagram
 ```
 
 
-## . Security Architecture
+## 4. Security Architecture
 
-###  Password Hashing & Transparent Migration
+### 4.1 Password Hashing & Transparent Migration
 
 Passwords are processed through a cryptographic layer in `db.jspf`. To maintain backwards compatibility with legacy SHA-1 database hashes without compromising security, the system employs **transparent on-login re-hashing**:
 
@@ -369,11 +411,11 @@ docker exec -i virtual_classroom_db mysql -u root -p"$MYSQL_ROOT_PASSWORD" proje
 
 Initial seed records configured in `project_DB.sql`:
 
-| Role | Username / Identifier | Password | Access URL |
+| Role | Username / Identifier | Password | Access URL (Local / EC2) |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | N/A (Master Key) | `admin123` *(or `Mypasswordis2425`)* | `http://localhost/admin_login.jsp` |
-| **Faculty (Teacher)** | `teacher` | `teacher123` | `http://localhost/faculty_login.jsp` |
-| **Student** | Roll No: `2001` | `student123` | `http://localhost/student_login.jsp` |
+| **Administrator** | N/A (Master Key) | `admin123` *(or `Mypasswordis2425`)* | `http://13.211.56.138/admin_login.jsp` *(or `http://localhost/admin_login.jsp`)* |
+| **Faculty (Teacher)** | `teacher` | `teacher123` | `http://13.211.56.138/faculty_login.jsp` *(or `http://localhost/faculty_login.jsp`)* |
+| **Student** | Roll No: `2001` | `student123` | `http://13.211.56.138/student_login.jsp` *(or `http://localhost/student_login.jsp`)* |
 
 ---
 
@@ -381,6 +423,12 @@ Initial seed records configured in `project_DB.sql`:
 
 ```text
 Virtual-Classroom/
+├── screenshots/                        # Application UI and deployment preview screenshots
+│   ├── 01-docker-desktop-build.png     # Docker Desktop container build & timing breakdown
+│   ├── 02-aws-ec2-deployment.png       # AWS EC2 running instance & public IP details
+│   ├── 03-virtual-classroom-homepage.png # Web application landing page (http://13.211.56.138/)
+│   ├── 04-study-materials-portal.png   # Study materials & lecture notes portal
+│   └── 05-qna-discussion-forum.png     # Interactive Q&A discussion forum
 ├── Dockerfile                          # Multi-stage/Slim Tomcat 9 OpenJDK 11 container definition
 ├── docker-compose.yml                  # 3-tier service topology (Nginx, Tomcat, MySQL)
 ├── nginx/
