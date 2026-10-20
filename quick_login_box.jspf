@@ -1,0 +1,529 @@
+<%@ page pageEncoding="UTF-8" %>
+<!-- Liquid Glass Quick Access Widget -->
+<div id="liquidAccessWidget" class="liquid-widget-container">
+    <!-- Minimized Floating Pill Badge -->
+    <button type="button" id="liquidPillTrigger" class="liquid-pill-badge" onclick="toggleLiquidWidget(true)">
+        <span class="liquid-pulse-dot"></span>
+        <span class="liquid-pill-label"><i class="fas fa-bolt mr-1"></i> Quick Login</span>
+    </button>
+
+    <!-- Liquid Glass Card -->
+    <div id="liquidGlassCard" class="liquid-glass-card">
+        <!-- Liquid Header -->
+        <div class="liquid-card-header">
+            <div class="liquid-header-title">
+                <span class="liquid-glow-orb"></span>
+                <h3>Direct Access</h3>
+                <span class="liquid-tag">Demo Portal</span>
+            </div>
+            <button type="button" class="liquid-close-btn" onclick="toggleLiquidWidget(false)" title="Minimize widget">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+        </div>
+
+        <!-- Role Tabs / Quick Switcher -->
+        <div class="liquid-tab-bar">
+            <button type="button" class="liquid-tab active" onclick="switchLiquidRole('student')">
+                <i class="fas fa-user-graduate"></i> Student
+            </button>
+            <button type="button" class="liquid-tab" onclick="switchLiquidRole('teacher')">
+                <i class="fas fa-chalkboard-teacher"></i> Teacher
+            </button>
+            <button type="button" class="liquid-tab" onclick="switchLiquidRole('admin')">
+                <i class="fas fa-user-shield"></i> Admin
+            </button>
+        </div>
+
+        <!-- Role Panels -->
+        <div class="liquid-card-body">
+            <!-- Student Panel -->
+            <div id="panel-student" class="liquid-role-panel active">
+                <div class="liquid-role-info">
+                    <div class="liquid-cred-chip">
+                        <span class="cred-label">Roll Number</span>
+                        <span class="cred-val">2001</span>
+                    </div>
+                    <div class="liquid-cred-chip">
+                        <span class="cred-label">Password</span>
+                        <span class="cred-val">student123</span>
+                    </div>
+                </div>
+                <div class="liquid-action-group">
+                    <form action="student_login.jsp" method="POST" class="m-0">
+                        <input type="hidden" name="roll_no" value="2001">
+                        <input type="hidden" name="password" value="student123">
+                        <input type="hidden" name="submit" value="login">
+                        <button type="submit" class="liquid-submit-btn">
+                            <span>Direct Login as Student</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </form>
+                    <button type="button" class="liquid-autofill-btn" onclick="liquidAutoFill('student', '2001', 'student123')">
+                        <i class="fas fa-edit"></i> Fill Page Form
+                    </button>
+                </div>
+            </div>
+
+            <!-- Teacher Panel -->
+            <div id="panel-teacher" class="liquid-role-panel">
+                <div class="liquid-role-info">
+                    <div class="liquid-cred-chip">
+                        <span class="cred-label">Username</span>
+                        <span class="cred-val">teacher</span>
+                    </div>
+                    <div class="liquid-cred-chip">
+                        <span class="cred-label">Password</span>
+                        <span class="cred-val">teacher123</span>
+                    </div>
+                </div>
+                <div class="liquid-action-group">
+                    <form action="faculty_login.jsp" method="POST" class="m-0">
+                        <input type="hidden" name="username" value="teacher">
+                        <input type="hidden" name="password" value="teacher123">
+                        <input type="hidden" name="submit" value="login">
+                        <button type="submit" class="liquid-submit-btn">
+                            <span>Direct Login as Teacher</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </form>
+                    <button type="button" class="liquid-autofill-btn" onclick="liquidAutoFill('teacher', 'teacher', 'teacher123')">
+                        <i class="fas fa-edit"></i> Fill Page Form
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Panel -->
+            <div id="panel-admin" class="liquid-role-panel">
+                <div class="liquid-role-info">
+                    <div class="liquid-cred-chip w-100">
+                        <span class="cred-label">Master Password</span>
+                        <span class="cred-val">admin123</span>
+                    </div>
+                </div>
+                <div class="liquid-action-group">
+                    <form action="admin_login.jsp" method="POST" class="m-0">
+                        <input type="hidden" name="password" value="admin123">
+                        <input type="hidden" name="submit" value="login">
+                        <button type="submit" class="liquid-submit-btn">
+                            <span>Direct Login as Admin</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </form>
+                    <button type="button" class="liquid-autofill-btn" onclick="liquidAutoFill('admin', '', 'admin123')">
+                        <i class="fas fa-edit"></i> Fill Page Form
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liquid Footer Quick Links -->
+        <div class="liquid-card-footer">
+            <span class="liquid-hint"><i class="fas fa-info-circle mr-1"></i> 1-click test access</span>
+            <div class="liquid-footer-pills">
+                <span class="pill-dot" onclick="switchLiquidRole('student')" title="Switch to Student">S</span>
+                <span class="pill-dot" onclick="switchLiquidRole('teacher')" title="Switch to Teacher">T</span>
+                <span class="pill-dot" onclick="switchLiquidRole('admin')" title="Switch to Admin">A</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* --- Liquid Glassmorphism & Theme Integration --- */
+.liquid-widget-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 99999;
+    font-family: 'Mulish', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    perspective: 1000px;
+}
+
+/* Minimized Floating Pill Badge */
+.liquid-pill-badge {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: rgba(22, 16, 44, 0.65);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 30px;
+    color: #ffffff;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(15, 10, 35, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.liquid-pill-badge:hover {
+    background: rgba(35, 25, 70, 0.85);
+    border-color: rgba(120, 235, 252, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(120, 235, 252, 0.25);
+}
+.liquid-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #78ebfc;
+    box-shadow: 0 0 10px #78ebfc;
+    animation: liquidPulse 2s infinite ease-in-out;
+}
+@keyframes liquidPulse {
+    0%, 100% { opacity: 0.6; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 14px #78ebfc; }
+}
+
+/* Liquid Glass Card */
+.liquid-glass-card {
+    width: 320px;
+    background: linear-gradient(135deg, rgba(30, 20, 58, 0.72) 0%, rgba(14, 18, 38, 0.82) 100%);
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-top: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 45px rgba(10, 5, 30, 0.45),
+        inset 0 1px 1px rgba(255, 255, 255, 0.35),
+        0 0 35px rgba(139, 90, 237, 0.18);
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Liquid Header */
+.liquid-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 12px 18px;
+    background: linear-gradient(90deg, rgba(139, 90, 237, 0.25) 0%, rgba(120, 235, 252, 0.15) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.liquid-header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.liquid-glow-orb {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #78ebfc;
+    box-shadow: 0 0 12px #78ebfc;
+}
+.liquid-header-title h3 {
+    margin: 0;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+.liquid-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+.liquid-close-btn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    color: #cbd5e1;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.liquid-close-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    transform: scale(1.08);
+}
+
+/* Liquid Tab Switcher */
+.liquid-tab-bar {
+    display: flex;
+    padding: 6px;
+    margin: 12px 14px 6px 14px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    gap: 4px;
+}
+.liquid-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.liquid-tab:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+}
+.liquid-tab.active {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+/* Role Panels */
+.liquid-card-body {
+    padding: 12px 16px 14px 16px;
+}
+.liquid-role-panel {
+    display: none;
+    animation: liquidFadeIn 0.3s ease forwards;
+}
+.liquid-role-panel.active {
+    display: block;
+}
+@keyframes liquidFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Credentials Chips */
+.liquid-role-info {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.liquid-cred-chip {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 7px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.cred-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 600;
+}
+.cred-val {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #78ebfc;
+    letter-spacing: 0.3px;
+}
+
+/* Buttons */
+.liquid-action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.liquid-submit-btn {
+    width: 100%;
+    height: 42px;
+    background: #ffffff;
+    color: #1a1033;
+    border: none;
+    border-radius: 22px;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.liquid-submit-btn:hover {
+    background: linear-gradient(135deg, #ffffff 0%, #78ebfc 100%);
+    color: #0b061c;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(120, 235, 252, 0.4);
+}
+.liquid-submit-btn i {
+    transition: transform 0.25s ease;
+}
+.liquid-submit-btn:hover i {
+    transform: translateX(3px);
+}
+
+.liquid-autofill-btn {
+    width: 100%;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.25s ease;
+}
+.liquid-autofill-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+}
+
+/* Liquid Footer */
+.liquid-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 18px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.liquid-hint {
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.5);
+}
+.liquid-footer-pills {
+    display: flex;
+    gap: 5px;
+}
+.pill-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: bold;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.pill-dot:hover {
+    background: #78ebfc;
+    color: #0b061c;
+    border-color: #78ebfc;
+    transform: scale(1.15);
+}
+
+/* Responsive adjustment */
+@media (max-width: 575px) {
+    .liquid-widget-container {
+        top: 12px;
+        right: 12px;
+    }
+    .liquid-glass-card {
+        width: 290px;
+    }
+}
+</style>
+
+<script>
+function switchLiquidRole(role) {
+    // Update tabs
+    var tabs = document.querySelectorAll('.liquid-tab');
+    tabs.forEach(function(t) {
+        t.classList.remove('active');
+        if (t.innerText.toLowerCase().indexOf(role) !== -1) {
+            t.classList.add('active');
+        }
+    });
+
+    // Update panels
+    var panels = document.querySelectorAll('.liquid-role-panel');
+    panels.forEach(function(p) {
+        p.classList.remove('active');
+    });
+
+    var target = document.getElementById('panel-' + role);
+    if (target) {
+        target.classList.add('active');
+    }
+}
+
+function toggleLiquidWidget(showCard) {
+    var card = document.getElementById('liquidGlassCard');
+    var pill = document.getElementById('liquidPillTrigger');
+    if (showCard) {
+        card.style.display = 'block';
+        pill.style.display = 'none';
+    } else {
+        card.style.display = 'none';
+        pill.style.display = 'flex';
+    }
+}
+
+function liquidAutoFill(role, userVal, passVal) {
+    var rollInp = document.querySelector('input[name="roll_no"]');
+    var userInp = document.querySelector('input[name="username"]');
+    var passInp = document.querySelector('input[name="password"]');
+
+    if (role === 'student' && rollInp && passInp) {
+        rollInp.value = userVal;
+        passInp.value = passVal;
+    } else if (role === 'teacher' && userInp && passInp) {
+        userInp.value = userVal;
+        passInp.value = passVal;
+    } else if (role === 'admin' && passInp) {
+        passInp.value = passVal;
+    } else {
+        if (passInp) passInp.value = passVal;
+        if (rollInp) rollInp.value = userVal;
+        if (userInp) userInp.value = userVal;
+    }
+
+    // Flash border highlight on the filled input
+    var targetInputs = [rollInp, userInp, passInp].filter(Boolean);
+    targetInputs.forEach(function(inp) {
+        var orig = inp.style.boxShadow;
+        inp.style.transition = 'box-shadow 0.3s ease';
+        inp.style.boxShadow = '0 0 14px rgba(120, 235, 252, 0.8)';
+        setTimeout(function() {
+            inp.style.boxShadow = orig;
+        }, 1200);
+    });
+}
+
+// Auto-activate matching role tab based on the current page
+(function() {
+    var p = window.location.pathname.toLowerCase();
+    if (p.indexOf('faculty') !== -1) {
+        switchLiquidRole('teacher');
+    } else if (p.indexOf('admin') !== -1) {
+        switchLiquidRole('admin');
+    } else {
+        switchLiquidRole('student');
+    }
+})();
+</script>
