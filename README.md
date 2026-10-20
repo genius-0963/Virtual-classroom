@@ -1,6 +1,8 @@
 # Virtual Classroom — System Architecture & Production Deployment Guide
 
-A multi academic management portal and learning management system (LMS) built on JavaServer Pages (JSP), Apache Tomcat 9, MySQL 8.0, and an Nginx reverse proxy edge gateway.
+A fully depolyed project in both docker , Amazone AWS EC2 in ubuntu default Login Credentials of Administrator Faculty	teacher	and Student
+
+this is a  multi academic management portal and learning management system built on JavaServer Pages (JSP), Apache Tomcat 9, MySQL 8.0, and an Nginx reverse proxy edge gateway.
 
 The application implements role-based access control (RBAC) across Students, Faculty, and System Administrators, backed by connection-pooled database interactions, transparent cryptographic password migration, and containerized deployment.
 
