@@ -10,8 +10,9 @@ CREATE TABLE admin (
     password VARCHAR(255) NOT NULL
 ) ENGINE = InnoDB;
 
--- Default Admin Password: admin123 (SHA1 hash for initial bootstrap, verified and upgraded by app)
+-- Default Admin Passwords (SHA1 hash for initial bootstrap, verified and upgraded by app)
 INSERT INTO admin (password) VALUES (SHA1('admin123'));
+INSERT INTO admin (password) VALUES (SHA1('Mypasswordis2425'));
 
 -- Courses and Degrees
 CREATE TABLE enroll_for (

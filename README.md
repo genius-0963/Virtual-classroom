@@ -369,7 +369,7 @@ Initial seed records configured in `project_DB.sql`:
 
 | Role | Username / Identifier | Password | Access URL |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | N/A (Master Key) | `Mypasswordis2425` | `http://localhost/admin_login.jsp` |
+| **Administrator** | N/A (Master Key) | `admin123` *(or `Mypasswordis2425`)* | `http://localhost/admin_login.jsp` |
 | **Faculty (Teacher)** | `teacher` | `teacher123` | `http://localhost/faculty_login.jsp` |
 | **Student** | Roll No: `2001` | `student123` | `http://localhost/student_login.jsp` |
 
